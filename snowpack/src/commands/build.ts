@@ -29,7 +29,9 @@ import {
   readFile,
   relativeURL,
   removeLeadingSlash,
+  getLastExt,
   replaceExt,
+  outputHasLastExt,
 } from '../util';
 import {getInstallTargets, run as installRunner} from './install';
 
@@ -123,7 +125,7 @@ class FileBuilder {
       const outLoc = path.join(this.outDir, outFilename);
       const sourceMappingURL = outFilename + '.map';
       if (typeof code === 'string') {
-        switch (fileExt) {
+        switch (getLastExt(fileExt)) {
           case '.css': {
             if (map) code = cssSourceMappingURL(code, sourceMappingURL);
             this.filesToResolve[outLoc] = {
@@ -136,7 +138,8 @@ class FileBuilder {
           }
 
           case '.js': {
-            if (builtFileOutput['.css']) {
+            const cssExt = outputHasLastExt(builtFileOutput, '.css');
+            if (cssExt) {
               // inject CSS if imported directly
               const cssFilename = outFilename.replace(/\.js$/i, '.css');
               code = `import './${cssFilename}';\n` + code;
@@ -391,7 +394,7 @@ export async function command(commandOptions: CommandOptions) {
     });
     for (const rawLocOnDisk of allFiles) {
       const fileLoc = path.resolve(rawLocOnDisk); // this is necessary since glob.sync() returns paths with / on windows.  path.resolve() will switch them to the native path separator.
-      const finalUrl = getUrlForFileMount({fileLoc, mountKey: mountedDir, mountEntry, config});
+      const finalUrl = getUrlForFileMount({fileLoc, mountKey: mountedDir, mountEntry, config})!;
       const finalDestLoc = path.join(buildDirectoryLoc, finalUrl);
       const outDir = path.dirname(finalDestLoc);
       const buildPipelineFile = new FileBuilder({filepath: fileLoc, outDir, config});

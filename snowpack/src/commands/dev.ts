@@ -71,6 +71,7 @@ import {
   DEV_DEPENDENCIES_DIR,
   getExt,
   getLastExt,
+  outputHasLastExt,
   HMR_CLIENT_CODE,
   HMR_OVERLAY_CODE,
   jsSourceMappingURL,
@@ -583,11 +584,11 @@ export async function startServer(commandOptions: CommandOptions) {
     async function wrapResponse(
       code: string | Buffer,
       {
-        hasCssResource,
+        hasCssExt,
         sourceMap,
         sourceMappingURL,
       }: {
-        hasCssResource: boolean;
+        hasCssExt: string | undefined;
         sourceMap?: string;
         sourceMappingURL: string;
       },
@@ -610,7 +611,7 @@ export async function startServer(commandOptions: CommandOptions) {
       }
 
       // transform other files
-      switch (responseFileExt) {
+      switch (getLastExt(responseFileExt)) {
         case '.css': {
           if (sourceMap) code = cssSourceMappingURL(code as string, sourceMappingURL);
           break;
@@ -622,9 +623,9 @@ export async function startServer(commandOptions: CommandOptions) {
             code = wrapImportMeta({code: code as string, env: true, hmr: isHmr, config});
           }
 
-          if (hasCssResource)
+          if (hasCssExt !== undefined)
             code =
-              `import './${path.basename(reqPath).replace(/.js$/, '.css.proxy.js')}';\n` + code;
+              `import './${path.basename(reqPath).replace(/.js$/, hasCssExt+'.proxy.js')}';\n` + code;
 
           // source mapping
           if (sourceMap) code = jsSourceMappingURL(code, sourceMappingURL);
@@ -767,18 +768,23 @@ export async function startServer(commandOptions: CommandOptions) {
       output: SnowpackBuildMap,
     ): Promise<string | Buffer | null> {
       // Verify that the requested file exists in the build output map.
-      for (const ext of requestedFileExt) {
+      for (let ext of requestedFileExt) {
         if (!output[ext]) {
-          continue;
+          let expandedExt = outputHasLastExt(output, ext);
+          if (expandedExt) {
+            ext = expandedExt;
+          } else {
+            continue;
+          }
         }
 
         const {code, map} = output[ext];
         let finalResponse = code;
 
         // Wrap the response.
-        const hasAttachedCss = ext.endsWith('.js') && !!output['.css'];
+        const hasAttachedCss = ext.endsWith('.js') ? outputHasLastExt(output, '.css') : undefined;
         finalResponse = await wrapResponse(finalResponse, {
-          hasCssResource: hasAttachedCss,
+          hasCssExt: hasAttachedCss,
           sourceMap: map,
           sourceMappingURL: path.basename(requestedFile.base) + '.map',
         });

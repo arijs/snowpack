@@ -13,7 +13,7 @@ import open from 'open';
 import path from 'path';
 import rimraf from 'rimraf';
 import validatePackageName from 'validate-npm-package-name';
-import {ImportMap, SnowpackConfig} from './types/snowpack';
+import {ImportMap, SnowpackBuildMap, SnowpackConfig} from './types/snowpack';
 
 import type {HttpieResponse} from 'httpie';
 
@@ -326,6 +326,12 @@ export function getExt(fileName: string) {
 export function getLastExt(fileName: string) {
   const mat = /\.[^.]*$/.exec(fileName);
   return mat ? mat[0] : '';
+}
+
+export function outputHasLastExt(output: SnowpackBuildMap, searchExt: string): string | undefined {
+  for (const outputExt of Object.keys(output)) {
+    if (outputExt.endsWith(searchExt)) return outputExt;
+  }
 }
 
 /** Replace file extensions */

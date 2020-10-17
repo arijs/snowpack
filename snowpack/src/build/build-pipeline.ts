@@ -47,9 +47,7 @@ async function runPipelineLoadStep(
   srcPath: string,
   {isDev, isSSR, isHmrEnabled, plugins, sourceMaps}: BuildFileOptions,
 ): Promise<SnowpackBuildMap> {
-  let lastExt;
   for (const srcExt of getExt(srcPath)) {
-    lastExt = srcExt;
     for (const step of plugins) {
       if (
         !step.load ||
@@ -110,7 +108,7 @@ async function runPipelineLoadStep(
   }
 
   return {
-    [lastExt]: {
+    [getLastExt(srcPath)]: {
       code: await readFile(srcPath),
     },
   };

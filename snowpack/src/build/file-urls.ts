@@ -1,5 +1,5 @@
 import path from 'path';
-import {SnowpackConfig, SnowpackPlugin} from '../types/snowpack';
+import {SnowpackConfig} from '../types/snowpack';
 import {logger} from '../logger';
 import {getExt, replaceExt} from '../util';
 
@@ -24,7 +24,7 @@ export const defaultFileExtensionMapping = {
   '.less': '.css',
 };
 
-export function tryPluginsResolveExt(config: SnowpackConfig, filePath: string) {
+export function pluginsResolveExt(config: SnowpackConfig, filePath: string) {
 
   const pluginResolveMultiple: string[] = [];
   let lastExt = '';
@@ -78,7 +78,7 @@ export function getUrlForFileMount({
   config: SnowpackConfig;
 }): string {
   const resolvedDirUrl = mountEntry === '/' ? '' : mountEntry;
-  return tryPluginsResolveExt(
+  return pluginsResolveExt(
     config,
     fileLoc.replace(mountKey, resolvedDirUrl).replace(/[/\\]+/g, '/'),
   );

@@ -2,8 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import url from 'url';
 import {ImportMap, SnowpackConfig} from '../types/snowpack';
-import {findMatchingAliasEntry, getExt, relativeURL, replaceExt} from '../util';
-import {tryPluginsResolveExt} from './file-urls';
+import {findMatchingAliasEntry, relativeURL} from '../util';
+import {pluginsResolveExt} from './file-urls';
 
 const cwd = process.cwd();
 
@@ -35,7 +35,7 @@ function resolveSourceSpecifier(spec: string, stats: fs.Stats | false, config: S
   if (!stats && !spec.endsWith('.js') && !spec.endsWith('.css')) {
     spec = spec + '.js';
   }
-  return tryPluginsResolveExt(config, spec);
+  return pluginsResolveExt(config, spec);
 }
 
 /**
