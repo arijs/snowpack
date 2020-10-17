@@ -451,8 +451,11 @@ export async function startServer(commandOptions: CommandOptions) {
         if (fileLocExact) {
           return fileLocExact;
         }
-        for (const potentialSourceFile of getInputsFromOutput(requestedFile, config.plugins)) {
+        const sourceList = getInputsFromOutput(requestedFile, config.plugins);
+        logger.info('Inputs from output: ' + requestedFile);
+        for (const potentialSourceFile of sourceList) {
           const fileLoc = await attemptLoadFile(potentialSourceFile);
+          logger.info('- ' + potentialSourceFile + (fileLoc ? ' FOUND' : ' no'));
           if (fileLoc) {
             return fileLoc;
           }
