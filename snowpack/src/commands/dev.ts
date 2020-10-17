@@ -642,7 +642,7 @@ export async function startServer(commandOptions: CommandOptions) {
           locOnDisk: fileLoc,
           contents: wrappedResponse,
           baseExt: responseExt,
-          expandedExt: getExt(fileLoc).expandedExt,
+          expandedExt: getExt(fileLoc)[0] || '',
         },
         (spec) => {
           // Try to resolve the specifier to a known URL in the project

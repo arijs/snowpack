@@ -8,7 +8,7 @@ import {
   relativeURL,
   replaceExt,
 } from '../util';
-import {defaultFileExtensionMapping} from './file-urls';
+import {tryPluginsResolveExt} from './file-urls';
 
 const cwd = process.cwd();
 
@@ -37,12 +37,7 @@ function resolveSourceSpecifier(spec: string, stats: fs.Stats | false, config: S
   } else if (!stats && !spec.endsWith('.js') && !spec.endsWith('.css')) {
     spec = spec + '.js';
   }
-  const {baseExt} = getExt(spec);
-  const extToReplace = config._extensionMap[baseExt] || defaultFileExtensionMapping[baseExt];
-  if (extToReplace) {
-    spec = replaceExt(spec, baseExt, extToReplace);
-  }
-  return spec;
+  return tryPluginsResolveExt(config, spec);
 }
 
 /**
