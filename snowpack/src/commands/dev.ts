@@ -787,6 +787,7 @@ export async function startServer(commandOptions: CommandOptions) {
     let hotCachedResponse: SnowpackBuildMap | undefined = inMemoryBuildCache.get(
       getCacheKey(fileLoc, {isSSR, env: process.env.NODE_ENV}),
     );
+    logger.info('Step 1: ' + fileLoc + ' HCR '+(hotCachedResponse?'true':'false'));
     if (hotCachedResponse) {
       let responseContent: string | Buffer | null;
       try {
@@ -818,13 +819,16 @@ export async function startServer(commandOptions: CommandOptions) {
 
     // 2. Load the file from disk. We'll need it to check the cold cache or build from scratch.
     const fileContents = await readFile(fileLoc);
+    logger.info('Step 2: ' + fileLoc + ' LOAD '+fileContents.length+' bytes');
 
     // 3. Send dependencies directly, since they were already build & resolved
     // at install time.
     if (reqPath.startsWith(config.buildOptions.webModulesUrl) && !isProxyModule) {
       sendFile(req, res, fileContents, fileLoc, responseFileExt);
+      logger.info('Step 3: ' + fileLoc + ' SEND true');
       return;
     }
+    logger.info('Step 3: ' + fileLoc + ' SEND false');
 
     // 4. Check the persistent cache. If found, serve it via a
     // "trust-but-verify" strategy. Build it after sending, and if it no longer
@@ -836,6 +840,7 @@ export async function startServer(commandOptions: CommandOptions) {
       (await cacache
         .get(BUILD_CACHE, getCacheKey(fileLoc, {isSSR, env: process.env.NODE_ENV}))
         .catch(() => null));
+    logger.info('Step 4: ' + fileLoc + ' persistent ' + (cachedBuildData?'true':'false'));
     if (cachedBuildData) {
       const {originalFileHash} = cachedBuildData.metadata;
       const newFileHash = etag(fileContents);
@@ -896,7 +901,9 @@ export async function startServer(commandOptions: CommandOptions) {
     let responseOutput: SnowpackBuildMap;
     try {
       responseOutput = await buildFile(fileLoc);
+      logger.info('Step 5: ' + fileLoc + ' BUILD true');
     } catch (err) {
+      logger.info('Step 5: ' + fileLoc + ' BUILD ERROR');
       logger.error(err.toString(), {name: err.__snowpackBuildDetails?.name});
       hmrEngine.broadcastMessage({
         type: 'error',
@@ -912,7 +919,9 @@ export async function startServer(commandOptions: CommandOptions) {
     }
     try {
       responseContent = await finalizeResponse(fileLoc, requestedFileExt, responseOutput);
+      logger.info('Step 5b: ' + fileLoc + ' FINALIZE true');
     } catch (err) {
+      logger.info('Step 5b: ' + fileLoc + ' FINALIZE ERROR');
       logger.error(FILE_BUILD_RESULT_ERROR);
       logger.error(err.toString());
       hmrEngine.broadcastMessage({
@@ -927,13 +936,16 @@ export async function startServer(commandOptions: CommandOptions) {
     }
     if (!responseContent) {
       if (next) {
+        logger.info('Step 5c: ' + fileLoc + ' CONTENT EMPTY/next');
         next();
       } else {
+        logger.info('Step 5c: ' + fileLoc + ' CONTENT EMPTY/404');
         sendError(req, res, 404);
       }
       return;
     }
 
+    logger.info('Step 5c: ' + fileLoc + ' SEND content '+responseContent.length+' bytes');
     sendFile(req, res, responseContent, fileLoc, responseFileExt);
     const originalFileHash = etag(fileContents);
 
