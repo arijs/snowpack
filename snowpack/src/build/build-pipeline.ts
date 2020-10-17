@@ -84,10 +84,10 @@ async function runPipelineLoadStep(
           Object.keys(result).forEach((ext) => {
             const output = result[ext];
 
-          // normalize to {code, map} format
-          if (typeof output === 'string' || Buffer.isBuffer(output)) {
-            result[ext] = {code: output};
-          }
+            // normalize to {code, map} format
+            if (typeof output === 'string' || Buffer.isBuffer(output)) {
+              result[ext] = {code: output};
+            }
 
             // ensure source maps are strings (it’s easy for plugins to pass back a JSON object)
             if (result[ext].map && typeof result[ext].map === 'object')

@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import url from 'url';
 import {ImportMap, SnowpackConfig} from '../types/snowpack';
-import {findMatchingAliasEntry, getExt, relativeURL, replaceExt} from '../util';
+import {findMatchingAliasEntry, relativeURL} from '../util';
 import {tryPluginsResolveExt} from './file-urls';
 
 const cwd = process.cwd();
