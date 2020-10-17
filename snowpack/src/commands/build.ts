@@ -132,7 +132,11 @@ class FileBuilder {
       if (!code) {
         continue;
       }
-      const outFilename = replaceExt(path.basename(this.filepath), srcExt, fileExt);
+
+      let outFilename = path.basename(this.filepath);
+      if (srcExt !== fileExt) { // optimization
+        outFilename = replaceExt(outFilename, srcExt, fileExt);
+      }
       const outLoc = path.join(this.outDir, outFilename);
       const sourceMappingURL = outFilename + '.map';
       if (this.mountEntry.resolve && typeof code === 'string') {
