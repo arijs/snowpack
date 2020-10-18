@@ -648,7 +648,7 @@ export async function startDevServer(commandOptions: CommandOptions): Promise<Sn
         return existingBuilderPromise;
       }
       const fileBuilderPromise = (async () => {
-        const builtFileOutput = await _buildFile(fileLoc, {
+        const {result: builtFileOutput} = await _buildFile(fileLoc, {
           plugins: config.plugins,
           isDev: true,
           isSSR,

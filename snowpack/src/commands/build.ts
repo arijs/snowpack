@@ -24,11 +24,14 @@ import {
   CommandOptions,
   ImportMap,
   MountEntry,
+  SnowpackBuiltFile,
   SnowpackConfig,
   SnowpackSourceFile,
+  SnowpackBuildMapExt,
 } from '../types/snowpack';
 import {
   cssSourceMappingURL,
+  getLastExt,
   HMR_CLIENT_CODE,
   HMR_OVERLAY_CODE,
   jsSourceMappingURL,
@@ -116,16 +119,24 @@ class FileBuilder {
   async buildFile() {
     this.filesToResolve = {};
     const isSSR = this.config.experiments.ssr;
-    const srcExt = path.extname(this.filepath);
-    const fileOutput = this.mountEntry.static
-      ? {[srcExt]: {code: await readFile(this.filepath)}}
-      : await buildFile(this.filepath, {
-          plugins: this.config.plugins,
-          isDev: false,
-          isSSR,
-          isHmrEnabled: false,
-          sourceMaps: this.config.buildOptions.sourceMaps,
-        });
+
+    let srcExt: string;
+    let fileOutput: Record<string, SnowpackBuiltFile>;
+
+    if (this.mountEntry.static) {
+      srcExt = getLastExt(this.filepath);
+      fileOutput = {
+        [srcExt]: {code: await readFile(this.filepath)}
+      };
+    } else {
+      ({srcExt, result: fileOutput} = await buildFile(this.filepath, {
+        plugins: this.config.plugins,
+        isDev: false,
+        isSSR,
+        isHmrEnabled: false,
+        sourceMaps: this.config.buildOptions.sourceMaps,
+      }));
+    }
 
     for (const [fileExt, buildResult] of Object.entries(fileOutput)) {
       let {code, map} = buildResult;
