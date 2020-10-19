@@ -34,7 +34,9 @@ function resolveSourceSpecifier(spec: string, stats: fs.Stats | false, config: S
   if (!stats && !getLastExt(spec)) {
     spec = spec + '.js';
   }
-  return tryPluginsResolveExt(config, spec);
+
+  return spec;
+  // return tryPluginsResolveExt(config, spec, 'resolveSourceSpecifier');
 }
 
 /**

@@ -1,5 +1,5 @@
 import merge from 'deepmerge';
-import {promises as fs} from 'fs';
+import fsModule, {promises as fs} from 'fs';
 import glob from 'glob';
 import * as colors from 'kleur/colors';
 import mkdirp from 'mkdirp';
@@ -224,6 +224,15 @@ class FileBuilder {
       const resolvedCode = await transformFileImports(file, (spec) => {
         // Try to resolve the specifier to a known URL in the project
         let resolvedImportUrl = resolveImportSpecifier(spec);
+
+        if (/foo/.test(outLoc)) {
+          fsModule.appendFileSync(path.resolve(__dirname, '../../logPluginResolve.txt'), '.build.resolveImports.Specifier.1 '+JSON.stringify({
+            outLoc,
+            spec,
+            resolvedImportUrl
+          }, null, '\t')+'\n');
+        }
+
         // NOTE: If the import cannot be resolved, we'll need to re-install
         // your dependencies. We don't support this yet, but we will.
         // Until supported, just exit here.

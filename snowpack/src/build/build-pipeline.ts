@@ -1,3 +1,4 @@
+import fsModule from 'fs';
 import path from 'path';
 import {validatePluginLoadResult} from '../config';
 import {logger} from '../logger';
@@ -71,6 +72,22 @@ async function runPipelineLoadStep(
           isHmrEnabled,
         });
         logger.debug(`✔ load() success [${debugPath}]`, {name: step.name});
+
+        if (/css/g.test(srcPath)) {
+          fsModule.appendFileSync(path.resolve(__dirname, '../../logPluginResolve.txt'), '.buildPipelineLoad.1 '+JSON.stringify({
+            srcExt,
+            srcPath,
+            isDev,
+            step: {
+              name: step.name,
+              resolve: step.resolve,
+            },
+            typeofResult: typeof result,
+            result: null !== result && 'object' === typeof result
+              ? Object.entries(result).map(([key, val]) => [key, typeof val, val ? typeof val.code : 'not val'])
+              : String(result).substr(0, 64),
+          }, null, '\t')+'\n');
+        }
 
         validatePluginLoadResult(step, result);
 
@@ -265,10 +282,39 @@ export async function buildFile(
   srcPath: string,
   buildFileOptions: BuildFileOptions,
 ): Promise<SnowpackBuildMapExt> {
+
+  if (/css/g.test(srcPath)) {
+    fsModule.appendFileSync(path.resolve(__dirname, '../../logPluginResolve.txt'), '.buildFile.1 '+JSON.stringify({
+      srcPath,
+    }, null, '\t')+'\n');
+  }
+
   // Pass 1: Find the first plugin to load this file, and return the result
   const {srcExt, result: loadResult} = await runPipelineLoadStep(srcPath, buildFileOptions);
+
+  if (/css/g.test(srcPath)) {
+    fsModule.appendFileSync(path.resolve(__dirname, '../../logPluginResolve.txt'), '.buildFile.2 '+JSON.stringify({
+      srcExt,
+      srcPath,
+      result: null !== loadResult && 'object' === typeof loadResult
+        ? Object.entries(loadResult).map(([key, val]) => [key, typeof val, val ? typeof val.code : 'not val'])
+        : String(loadResult).substr(0, 64),
+    }, null, '\t')+'\n');
+  }
+
   // Pass 2: Pass that result through every plugin transform() method.
   const transformResult = await runPipelineTransformStep(loadResult, srcPath, buildFileOptions);
+
+  if (/css/g.test(srcPath)) {
+    fsModule.appendFileSync(path.resolve(__dirname, '../../logPluginResolve.txt'), '.buildFile.3 '+JSON.stringify({
+      srcExt,
+      srcPath,
+      result: null !== transformResult && 'object' === typeof transformResult
+        ? Object.entries(transformResult).map(([key, val]) => [key, typeof val, val ? typeof val.code : 'not val'])
+        : String(transformResult).substr(0, 64),
+    }, null, '\t')+'\n');
+  }
+
   // Return the final build result.
   return {srcExt, result: transformResult};
 }

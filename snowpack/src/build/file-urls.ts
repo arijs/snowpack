@@ -1,3 +1,4 @@
+import fsModule from 'fs';
 import path from 'path';
 import {MountEntry, SnowpackConfig} from '../types/snowpack';
 import {logger} from '../logger';
@@ -24,9 +25,10 @@ export const defaultFileExtensionMapping = {
   '.less': '.css',
 };
 
-export function tryPluginsResolveExt(config: SnowpackConfig, filePath: string) {
+export function tryPluginsResolveExt(config: SnowpackConfig, filePath: string, source: string) {
 
   let inputExt, outputExt;
+  if (source === 'getUrlForFileMount')
   for (const ext of getExt(filePath)) {
     for (const plugin of config.plugins) {
       if (
@@ -48,9 +50,33 @@ export function tryPluginsResolveExt(config: SnowpackConfig, filePath: string) {
     }
     if (inputExt) break;
   }
+
+  if (/foo/.test(filePath)) {
+    fsModule.appendFileSync(path.resolve(__dirname, '../../logPluginResolve.txt'), '.build.fileUrls.tryPluginsResolveExt.1 '+JSON.stringify({
+      source,
+      filePath,
+      inputExt,
+      outputExt
+    }, null, '\t')+'\n');
+  }
+
+  let configOutputExt, defaultOutputExt;
   if (!inputExt) {
     inputExt = getLastExt(filePath);
-    outputExt = config._extensionMap[inputExt] || defaultFileExtensionMapping[inputExt] || inputExt;
+    configOutputExt = config._extensionMap[inputExt];
+    defaultOutputExt = defaultFileExtensionMapping[inputExt];
+    outputExt = configOutputExt || defaultOutputExt || inputExt;
+  }
+
+  if (/foo/.test(filePath)) {
+    fsModule.appendFileSync(path.resolve(__dirname, '../../logPluginResolve.txt'), '.build.fileUrls.tryPluginsResolveExt.2 '+JSON.stringify({
+      source,
+      filePath,
+      inputExt,
+      outputExt,
+      configOutputExt,
+      defaultOutputExt,
+    }, null, '\t')+'\n');
   }
 
   // optimization: most of the time, extensions are the same
@@ -80,6 +106,7 @@ export function getUrlForFileMount({
   return mountEntry.static ? fileLoc : tryPluginsResolveExt(
     config,
     fileLoc,
+    'getUrlForFileMount'
   );
 }
 
